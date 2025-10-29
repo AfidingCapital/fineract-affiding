@@ -34,7 +34,7 @@ public class AppUserClientMapping extends AbstractPersistableCustom<Long> {
     @JoinColumn(name = "appuser_id", nullable = false)
     private AppUser appUser;
 
-    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+    @ManyToOne(optional = false, cascade = CascadeType.MERGE)
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 

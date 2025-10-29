@@ -42,18 +42,26 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import lombok.RequiredArgsConstructor;
+
+import org.apache.fineract.commands.domain.CommandWrapper;
+import org.apache.fineract.commands.service.CommandWrapperBuilder;
+import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.UploadRequest;
+import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.documentmanagement.api.ImagesApiResource;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.client.api.ClientChargesApiResource;
 import org.apache.fineract.portfolio.client.api.ClientTransactionsApiResource;
 import org.apache.fineract.portfolio.client.api.ClientsApiResource;
+import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
+import org.apache.fineract.portfolio.client.service.ClientWritePlatformService;
 import org.apache.fineract.portfolio.self.client.data.SelfClientDataValidator;
 import org.apache.fineract.portfolio.self.client.service.AppuserClientMapperReadService;
 import org.apache.fineract.portfolio.self.config.SelfServiceModuleIsEnabledCondition;
+import org.apache.fineract.portfolio.self.registration.service.SelfServiceRegistrationWritePlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -75,6 +83,9 @@ public class SelfClientsApiResource {
     private final ClientTransactionsApiResource clientTransactionsApiResource;
     private final AppuserClientMapperReadService appUserClientMapperReadService;
     private final SelfClientDataValidator dataValidator;
+    //create client
+    private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
+    private final ToApiJsonSerializer<ClientData> toApiJsonSerializer;
 
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
@@ -282,6 +293,21 @@ public class SelfClientsApiResource {
         validateAppuserClientsMapping(clientId);
 
         return this.clientApiResource.retrieveObligeeDetails(clientId, uriInfo);
+    }
+    
+    @POST
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String createClient(final String apiRequestBodyAsJson) {
+    	
+        final CommandWrapper commandRequest = new CommandWrapperBuilder() //
+                .createClient() //
+                .withJson(apiRequestBodyAsJson) //
+                .build(); //
+
+        final CommandProcessingResult result = commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        //return toApiJsogranSerializer.serialize(result);
+        return "User created successfully";
     }
 
 }
